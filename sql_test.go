@@ -101,11 +101,39 @@ func TestSQLInjection(t *testing.T) {
 
 	ctx := context.Background()
 
-	username := "admin'; #" // username yang dimasukkan oleh user wajib benar tanpa perlu password, karena akan diabaikan oleh query
-	password := "admin1"
+	username := "admin'; #"       // username yang dimasukkan oleh user wajib benar tanpa perlu password, karena akan diabaikan oleh query
+	password := "admin or '1'='1" // password yang dimasukkan oleh user wajib benar tanpa perlu username, karena akan diabaikan oleh query
 	query := fmt.Sprintf("SELECT username FROM user WHERE username = '%s' AND password = '%s' LIMIT 1", username, password)
 	fmt.Println("Query:", query)
 	rows, err := db.QueryContext(ctx, query)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		var username string
+		err := rows.Scan(&username)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("Login Success, Welcome", username)
+	} else {
+		fmt.Println("Login Failed")
+	}
+}
+
+func TestSQLInjectionSafe(t *testing.T) {
+	db := GetConnection()
+	defer db.Close()
+
+	ctx := context.Background()
+
+	username := "admin '; #"
+	password := "admin"
+	query := "SELECT username FROM user WHERE username = ? AND password = ? LIMIT 1" // menggunakan parameter untuk menghindari SQL Injection
+	fmt.Println("Query:", query)
+	rows, err := db.QueryContext(ctx, query, username, password) // menggunakan parameter untuk menghindari SQL Injection
 	if err != nil {
 		panic(err)
 	}
