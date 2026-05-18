@@ -66,3 +66,59 @@ func TestQuerySql(t *testing.T) {
 		fmt.Println("=======================================")
 	}
 }
+
+func TestCreateTable(t *testing.T) {
+	db := GetConnection()
+	defer db.Close()
+
+	ctx := context.Background()
+
+	querycreateTable := `CREATE TABLE IF NOT EXISTS user (username VARCHAR(50), password VARCHAR(50) NOT NULL,PRIMARY KEY (username))engine=InnoDB;`
+
+	_, err := db.ExecContext(ctx, querycreateTable)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("Success create table")
+}
+
+func TestInsertUser(t *testing.T) {
+	db := GetConnection()
+	defer db.Close()
+
+	ctx := context.Background()
+
+	_, err := db.ExecContext(ctx, "INSERT INTO user(username, password) VALUES('admin', 'admin')")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("Success insert user")
+}
+
+func TestSQLInjection(t *testing.T) {
+	db := GetConnection()
+	defer db.Close()
+
+	ctx := context.Background()
+
+	username := "admin'; #" // username yang dimasukkan oleh user wajib benar tanpa perlu password, karena akan diabaikan oleh query
+	password := "admin1"
+	query := fmt.Sprintf("SELECT username FROM user WHERE username = '%s' AND password = '%s' LIMIT 1", username, password)
+	fmt.Println("Query:", query)
+	rows, err := db.QueryContext(ctx, query)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		var username string
+		err := rows.Scan(&username)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("Login Success, Welcome", username)
+	} else {
+		fmt.Println("Login Failed")
+	}
+}
