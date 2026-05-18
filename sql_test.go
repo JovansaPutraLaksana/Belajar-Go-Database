@@ -2,8 +2,10 @@ package belajar_go_database
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"testing"
+	"time"
 )
 
 func TestExecSql(t *testing.T) {
@@ -13,7 +15,7 @@ func TestExecSql(t *testing.T) {
 	ctx := context.Background()
 
 	// exec sql untuk insert data
-	_, err := db.ExecContext(ctx, "INSERT INTO customer(id, name) VALUES('c001', 'Jovansa')")
+	_, err := db.ExecContext(ctx, "INSERT INTO customer(id, name,email,balance,rating,birth_date,married) VALUES('c002', 'Putra',null,1500000,5,null,false)")
 	if err != nil {
 		panic(err)
 	}
@@ -32,4 +34,35 @@ func TestExecSql(t *testing.T) {
 	// 	panic(err)
 	// }
 	// fmt.Println("Success Delete Data")
+}
+
+func TestQuerySql(t *testing.T) {
+	db := GetConnection()
+	defer db.Close()
+
+	ctx := context.Background()
+
+	rows, err := db.QueryContext(ctx, "SELECT id, name, email, balance, rating, birth_date, married, created_at FROM customer")
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var id string
+		var name string
+		var email sql.NullString
+		var balance int
+		var rating float64
+		var birthDate sql.NullString
+		var married bool
+		var createdAt time.Time
+
+		err := rows.Scan(&id, &name, &email, &balance, &rating, &birthDate, &married, &createdAt)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("ID:", id, "\nName:", name, "\nEmail:", email.String, "\nBalance:", balance, "\nRating:", rating, "\nBirth Date:", birthDate.String, "\nMarried:", married, "\nCreated At:", createdAt)
+		fmt.Println("=======================================")
+	}
 }

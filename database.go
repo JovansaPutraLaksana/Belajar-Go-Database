@@ -8,7 +8,7 @@ import (
 )
 
 func GetConnection() *sql.DB {
-	db, err := sql.Open("mysql", "u7jrrwm6d2do347l:jD4C66nOGnoFxyr3Vxws@tcp(blzvlgzphf7oinbjckkg-mysql.services.clever-cloud.com:3306)/blzvlgzphf7oinbjckkg")
+	db, err := sql.Open("mysql", "u7jrrwm6d2do347l:jD4C66nOGnoFxyr3Vxws@tcp(blzvlgzphf7oinbjckkg-mysql.services.clever-cloud.com:3306)/blzvlgzphf7oinbjckkg?parseTime=true")
 
 	if err != nil {
 		panic(err)
