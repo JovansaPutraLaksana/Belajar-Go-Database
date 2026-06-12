@@ -73,7 +73,7 @@ func TestCreateTable(t *testing.T) {
 
 	ctx := context.Background()
 
-	querycreateTable := `CREATE TABLE IF NOT EXISTS user (username VARCHAR(50), password VARCHAR(50) NOT NULL,PRIMARY KEY (username))engine=InnoDB;`
+	querycreateTable := `CREATE TABLE IF NOT EXISTS comments (id INT NOT NULL AUTO_INCREMENT, email VARCHAR(100) NOT NULL, comment TEXT NOT NULL,PRIMARY KEY (id))engine=InnoDB;`
 
 	_, err := db.ExecContext(ctx, querycreateTable)
 	if err != nil {
@@ -87,12 +87,13 @@ func TestInsertUser(t *testing.T) {
 	defer db.Close()
 
 	ctx := context.Background()
+	queryctx := `INSERT INTO comments(email, comment) VALUES('john.doe@example.com', 'This is a test comment')`
 
-	_, err := db.ExecContext(ctx, "INSERT INTO user(username, password) VALUES('admin', 'admin')")
+	_, err := db.ExecContext(ctx, queryctx)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("Success insert user")
+	fmt.Println("Success insert comment")
 }
 
 func TestSQLInjection(t *testing.T) {
@@ -148,5 +149,51 @@ func TestSQLInjectionSafe(t *testing.T) {
 		fmt.Println("Login Success, Welcome", username)
 	} else {
 		fmt.Println("Login Failed")
+	}
+}
+
+func TestAutoIncrement(t *testing.T) {
+	db := GetConnection()
+	defer db.Close()
+
+	ctx := context.Background()
+
+	email := "Jovansa@gmail.com"
+	comment := "This is a test comment"
+	query := "INSERT INTO comments(email, comment) VALUES(?, ?)"
+	result, err := db.ExecContext(ctx, query, email, comment)
+	if err != nil {
+		panic(err)
+	}
+	id, err := result.LastInsertId()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("Success insert comment with ID:", id)
+}
+
+func TestSelectComments(t *testing.T) {
+	db := GetConnection()
+	defer db.Close()
+
+	ctx := context.Background()
+
+	rows, err := db.QueryContext(ctx, "SELECT id, email, comment FROM comments")
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var id int
+		var email string
+		var comment string
+
+		err := rows.Scan(&id, &email, &comment)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("ID:", id, "\nEmail:", email, "\nComment:", comment)
+		fmt.Println("=======================================")
 	}
 }
